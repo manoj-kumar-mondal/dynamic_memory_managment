@@ -6,6 +6,12 @@
 #include <stdlib.h>
 
 /******************** Constants / Typedefs ********************/
+#ifdef DEBUG_MODE
+  #define print(...) printf(__VA_ARGS__)
+#else
+  #define print(...) ((void)0)
+#endif
+
 typedef uint16_t MemPoolIndex_t;
 
 #pragma pack(1) // Prgma pack starts
@@ -43,25 +49,25 @@ static MemPoolIndex_t DeallocateMemory(uint8_t *pAddr);
 #ifdef DEBUG_MODE
 
 void PrintMemoryPool(void) {
-  printf("\nMemory Pool:");
+  print("\nMemory Pool:");
 
-  printf("%s%s%s", TAB, TAB, TAB);
+  print("%s%s%s", TAB, TAB, TAB);
   for(uint8_t i = 0 ; i <= 0xf ; i++)
-    printf("%X%s", i, TAB);
+    print("%X%s", i, TAB);
 
   for (MemPoolIndex_t Index = 0 ; Index < CONFIG_HEAP_SIZE ; Index++) {
     if (!(Index % 16)) {
-      printf("\n%s%p%s", TAB, &MemoryPool[Index], TAB);
+      print("\n%s%p%s", TAB, &MemoryPool[Index], TAB);
     }
-    printf("0x%02x ", MemoryPool[Index]);
+    print("0x%02X ", MemoryPool[Index]);
   }
-  printf("\n\n");
+  print("\n");
 }
 
 void MemPoolInfo(void) {
-  printf("\nMemPoolInfo:\n");
-  printf("%sAvailableMem: %d, ", TAB, MemPoolData.AvailableMem);
-  printf("MetaDataIndex: %d\n\n", MemPoolData.MetaDataIndex);
+  print("\nMemPoolInfo:\n");
+  print("%sAvailableMem: %d, ", TAB, MemPoolData.AvailableMem);
+  print("MetaDataIndex: %d\n\n", MemPoolData.MetaDataIndex);
 }
 
 #endif // DEBUG_MODE
@@ -107,7 +113,6 @@ static int CompareByIndex(const void *item1, const void *item2) {
  * @return uint8_t*: Pointer to the allocated memory
  */
 static uint8_t *MemAlloc(MemPoolIndex_t Size) {
-  printf("Allocating Index ... \n");
   const uint16_t TotalAllocatedIndex = ((CONFIG_HEAP_SIZE - MemPoolData.MetaDataIndex) / META_DATA_SIZE);
   MemMetaData_t AllocMetaInfo[TotalAllocatedIndex];
   MemPoolIndex_t ArrIndex = 0;
@@ -138,7 +143,7 @@ static uint8_t *MemAlloc(MemPoolIndex_t Size) {
   memset(pAllocAddr, 0xFF, Size);
   pAllocAddr[Size-1] = '\0';
   MemPoolData.AvailableMem -= Size;
-  printf("Allocation Done at Index: %d\n", PotentialIndex);
+  print("Memory Allocated at Index: %d\n", PotentialIndex);
   return pAllocAddr;  
 }
 
@@ -150,7 +155,7 @@ static uint8_t *MemAlloc(MemPoolIndex_t Size) {
 static uint8_t *AllocateMemory(MemPoolIndex_t Size) {
   if ((CONFIG_HEAP_SIZE < Size) || \
       ((MemPoolData.AvailableMem - META_DATA_SIZE) < Size)) {
-      printf("Memory allocation failed!!!, Avail: %d, Ask: %d\n", \
+      print("Memory allocation failed!!!, Avail: %d, Ask: %d\n", \
           (MemPoolData.AvailableMem - META_DATA_SIZE - 1), Size);
       return NULL;
     }
@@ -195,7 +200,6 @@ static MemPoolIndex_t IfValidAddrThenDelete(uint8_t *pAddr) {
     MemPoolIndex_t *pMemIndex = (MemPoolIndex_t*)pTemp;
     if (pAddr == (uint8_t*)&MemoryPool[*pMemIndex]) {
       Size = *(++pMemIndex);
-      printf("SizeL %x\n", Size);
       break;
     }
     pTemp -= META_DATA_SIZE;
